@@ -1201,16 +1201,16 @@ unique_ptr<Text> Patch::ComputeOldText(unique_ptr<Text> deleted_text,
           hunk.new_start.Traversal(deleted_text_slice_start));
       deleted_text_slice_start = hunk.new_start;
       deleted_text_slice = split_result.second;
-      result->insert(result->end(), split_result.first.begin(), split_result.first.end());
+      result->Append(split_result.first);
     }
 
-    result->insert(result->end(), hunk.old_text->begin(), hunk.old_text->end());
+    result->Append(*hunk.old_text);
     deleted_text_slice = deleted_text_slice.Suffix(
         hunk.new_end.Traversal(deleted_text_slice_start));
     deleted_text_slice_start = hunk.new_end;
   }
 
-  result->insert(result->end(), deleted_text_slice.begin(), deleted_text_slice.end());
+  result->Append(deleted_text_slice);
   return result;
 }
 
@@ -1261,9 +1261,13 @@ void AppendPointToBuffer(vector<uint8_t> *output, const Point &point) {
 void AppendTextToBuffer(vector<uint8_t> *output, const Text *text) {
   if (text) {
     AppendToBuffer<uint32_t>(output, 1);
-    AppendToBuffer(output, static_cast<uint32_t>(text->size()));
-    for (uint16_t character : *text) {
-      AppendToBuffer(output, character);
+    AppendToBuffer(output, static_cast<uint32_t>(text->lines.size()));
+    for (const Line &line : text->lines) {
+      AppendToBuffer(output, static_cast<uint32_t>(line.content.size()));
+      AppendToBuffer(output, static_cast<uint8_t>(line.ending));
+      for (uint16_t character : line.content) {
+        AppendToBuffer(output, character);
+      }
     }
   } else {
     AppendToBuffer<uint32_t>(output, 0);
@@ -1272,11 +1276,17 @@ void AppendTextToBuffer(vector<uint8_t> *output, const Text *text) {
 
 unique_ptr<Text> GetTextFromBuffer(const uint8_t **data, const uint8_t *end) {
   if (GetFromBuffer<uint32_t>(data, end)) {
-    uint32_t length = GetFromBuffer<uint32_t>(data, end);
+    uint32_t line_count = GetFromBuffer<uint32_t>(data, end);
     unique_ptr<Text> result {new Text()};
-    result->reserve(length);
-    for (uint32_t i = 0; i < length; i++) {
-      result->push_back(GetFromBuffer<uint16_t>(data, end));
+    result->lines.reserve(line_count);
+    for (uint32_t i = 0; i < line_count; i++) {
+      uint32_t line_length = GetFromBuffer<uint32_t>(data, end);
+      LineEnding line_ending = static_cast<LineEnding>(GetFromBuffer<uint8_t>(data, end));
+      Line line {{}, line_ending};
+      line.content.reserve(line_length);
+      for (uint32_t j = 0; j < line_length; j++) {
+        line.content.push_back(GetFromBuffer<uint16_t>(data, end));
+      }
     }
     return result;
   } else {
