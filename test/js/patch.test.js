@@ -141,7 +141,7 @@ describe('Patch', function () {
     assert.deepEqual(patch2.copy().getHunks(), patch2.getHunks())
   })
 
-  it('can serialize/deserialize patches', () => {
+  it.only('can serialize/deserialize patches', () => {
     const patch1 = new Patch()
     patch1.splice({row: 0, column: 3}, {row: 0, column: 5}, {row: 0, column: 5}, 'hello', 'world')
 

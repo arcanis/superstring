@@ -14,33 +14,12 @@ enum class LineEnding : uint8_t {
 };
 
 struct Line {
+  Line() : ending{LineEnding::NONE} {}
+  Line(const std::u16string &content, LineEnding ending) :
+    content{content}, ending{ending} {}
+
   std::u16string content;
   LineEnding ending;
-
-  std::u16string GetLineEndingString () const {
-    switch (ending) {
-      case LineEnding::NONE:
-        return {};
-      case LineEnding::LF:
-        return {'\n'};
-      case LineEnding::CR:
-        return {'\r'};
-      case LineEnding::CRLF:
-        return {'\r', '\n'};
-    }
-  }
-
-  size_t GetLineEndingLength () const {
-    switch (ending) {
-      case LineEnding::NONE:
-        return 0;
-      case LineEnding::LF:
-      case LineEnding::CR:
-        return 1;
-      case LineEnding::CRLF:
-        return 2;
-    }
-  }
 };
 
 struct TextSlice;
@@ -51,9 +30,8 @@ struct Text {
   Text();
 
   Point Extent() const;
-  size_t Size() const;
   void Append(TextSlice slice);
-  void Append(std::vector<char16_t> begin, std::iterator<char16_t> begin);
+  void Write(std::vector<uint16_t> &) const;
 };
 
 struct TextSlice {

@@ -1264,7 +1264,7 @@ void AppendTextToBuffer(vector<uint8_t> *output, const Text *text) {
     AppendToBuffer(output, static_cast<uint32_t>(text->lines.size()));
     for (const Line &line : text->lines) {
       AppendToBuffer(output, static_cast<uint32_t>(line.content.size()));
-      AppendToBuffer(output, static_cast<uint8_t>(line.ending));
+      AppendToBuffer(output, static_cast<uint16_t>(line.ending));
       for (uint16_t character : line.content) {
         AppendToBuffer(output, character);
       }
@@ -1281,7 +1281,7 @@ unique_ptr<Text> GetTextFromBuffer(const uint8_t **data, const uint8_t *end) {
     result->lines.reserve(line_count);
     for (uint32_t i = 0; i < line_count; i++) {
       uint32_t line_length = GetFromBuffer<uint32_t>(data, end);
-      LineEnding line_ending = static_cast<LineEnding>(GetFromBuffer<uint8_t>(data, end));
+      LineEnding line_ending = static_cast<LineEnding>(GetFromBuffer<uint16_t>(data, end));
       Line line {{}, line_ending};
       line.content.reserve(line_length);
       for (uint32_t j = 0; j < line_length; j++) {

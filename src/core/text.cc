@@ -10,15 +10,6 @@ using std::basic_ostream;
 
 Text::Text() : lines {Line{{}, LineEnding::NONE}} {}
 
-size_t Text::Size() const {
-  size_t size {0};
-  for (const Line &line : lines) {
-    size += line.content.size();
-    size += line.GetLineEndingLength();
-  }
-  return size;
-}
-
 void Text::Append(TextSlice slice) {
   Line &last_line = lines.back();
 
@@ -44,6 +35,32 @@ void Text::Append(TextSlice slice) {
       LineEnding::NONE
     });
   }
+}
+
+void Text::Write(vector<uint16_t> &vector) const {
+  for (const Line &line : lines) {
+    for (char16_t character : line.content) {
+      vector.push_back(character);
+    }
+    switch (line.ending) {
+      case LineEnding::NONE:
+        break;
+      case LineEnding::LF:
+        vector.push_back('\n');
+        break;
+      case LineEnding::CR:
+        vector.push_back('\r');
+        break;
+      case LineEnding::CRLF:
+        vector.push_back('\r');
+        vector.push_back('\n');
+        break;
+    }
+  }
+}
+
+Point Text::Extent() const {
+  return Point(lines.size() - 1, lines.back().content.size());
 }
 
 TextSlice::TextSlice(Text &text) : text{&text}, start{Point()}, end{text.Extent()} {}
@@ -82,8 +99,8 @@ TextSlice TextSlice::Prefix(Point prefix_end) {
 
 basic_ostream<char16_t> &operator<<(basic_ostream<char16_t> &stream, const Text &text) {
   for (Line line : text.lines) {
-    stream << line.content;
-    stream << line.GetLineEndingString();
+    // stream << line.content;
+    // stream << line.GetLineEndingString();
   }
   return stream;
 }
